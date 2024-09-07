@@ -1,13 +1,11 @@
+import os
 import psycopg2
 
 from psycopg2.extras import execute_values
-from config import load_config
 
 def connect():
-  config = load_config()
-
   try:
-    with psycopg2.connect(**config) as conn:
+    with psycopg2.connect(host=os.environ['DB_HOST'], dbname=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD']) as conn:
       return conn
   
   except (psycopg2.DatabaseError, Exception) as error:

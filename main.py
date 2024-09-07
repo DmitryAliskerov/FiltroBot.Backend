@@ -1,3 +1,4 @@
+import os
 import json 
 
 from telethon import TelegramClient, events
@@ -7,7 +8,7 @@ from telethon.tl.custom import Button
 from flask_server import run_flask
 from requests import set_user_chats
 
-bot = TelegramClient('bot', os.environ['API_ID'], os.environ['API_HASH']).start(bot_token=os.environ['BOT_TOKEN'])
+bot = TelegramClient('bot', api_id=os.environ['API_ID'], api_hash=os.environ['API_HASH']).start(bot_token=os.environ['BOT_TOKEN'])
 
 @bot.on(events.NewMessage(pattern='/start'))
 async def start(event):
