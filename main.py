@@ -19,8 +19,12 @@ async def start(event):
 
 @bot.on(events.Raw)
 async def handler(update):
+	print("MessageService")
+
 	if type(update.message).__name__ != "MessageService":
 		return
+
+	print("MessageService Proccess")
 
 	data = json.loads(update.message.action.data)
 	user_id = update.message.peer_id.user_id
