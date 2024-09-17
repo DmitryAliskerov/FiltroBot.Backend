@@ -11,6 +11,70 @@ def connect():
   except (psycopg2.DatabaseError, Exception) as error:
     print(error)
 
+
+def has_user_at_least_one_chat(user_id):
+  try:
+    with connect() as conn:
+      with  conn.cursor() as cursor:
+        cursor.execute("""
+          SELECT chat_id
+          FROM user_chat
+          WHERE user_id = %s LIMIT 1""", (user_id,))
+        return cursor.fetchone() is not None
+
+  except (Exception, psycopg2.DatabaseError) as error:
+    print(error)
+    return -1
+  
+  finally:
+    cursor.close()
+    conn.close()
+
+def get_user_chat_stats(user_id):
+  try:
+    with connect() as conn:
+      with  conn.cursor() as cursor:
+        cursor.execute("""
+          SELECT uc.chat_id, c.name, count(m.id)
+          FROM user_chat uc
+	  	LEFT JOIN chat c ON c.id = uc.chat_id
+		LEFT JOIN "message" m ON m.chat_id = uc.chat_id
+          WHERE user_id = %s
+	  GROUP BY uc.chat_id, c.name""", (user_id,))
+        return cursor.fetchall()
+
+  except (Exception, psycopg2.DatabaseError) as error:
+    print(error)
+    return -1
+  
+  finally:
+    cursor.close()
+    conn.close()
+
+def get_user_chat_messages(chat_id):
+  try:
+    with connect() as conn:
+      with  conn.cursor() as cursor:
+        cursor.execute("""
+          SELECT t.name, "link", m.timestamp
+          FROM message m
+            LEFT JOIN message_tag mt ON mt.id = m.id AND mt.chat_id = m.chat_id
+            LEFT JOIN tag t ON t.id = mt.tag_id
+          WHERE m.chat_id = %s
+          ORDER BY m.timestamp""", (chat_id,))
+        return cursor.fetchall()
+
+  except (Exception, psycopg2.DatabaseError) as error:
+    print(error)
+    return -1
+  
+  finally:
+    cursor.close()
+    conn.close()
+
+
+
+
 def get_user_chats(user_id):
   try:
     with connect() as conn:
@@ -18,7 +82,7 @@ def get_user_chats(user_id):
         cursor.execute("""
           SELECT c.id, c.aliase, c.name, CASE WHEN uc.user_id IS NULL THEN FALSE ELSE TRUE END
           FROM chat c
-            LEFT JOIN public.user_chat uc ON uc.user_id = %s and uc.chat_id = c.id
+            LEFT JOIN user_chat uc ON uc.user_id = %s and uc.chat_id = c.id
           WHERE c.enabled""", (user_id,))
         return cursor.fetchall()
 

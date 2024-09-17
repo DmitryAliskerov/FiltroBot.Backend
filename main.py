@@ -1,26 +1,54 @@
 import os
 import json 
+import requests
 
 from telethon import TelegramClient, events
 from telethon.sync import TelegramClient
 from telethon import functions, types
+from telethon import Button
 from telethon.tl.custom import Button
 from flask_server import run_flask
-from requests import set_user_chats
 
 bot = TelegramClient('bot', api_id=os.environ['API_ID'], api_hash=os.environ['API_HASH']).start(bot_token=os.environ['BOT_TOKEN'])
+base_url = "https://dmitryaliskerov.github.io/FiltroBot.UI"
 
 @bot.on(events.NewMessage(pattern='/start'))
 async def start(event):
 	sender = await event.get_sender()
-	await bot.send_message(event.chat_id, f'Приветствую Вас, {sender.username}', buttons=[types.KeyboardButtonSimpleWebView('Test', f"https://dmitryaliskerov.github.io/FiltroBot.UI?user_id={sender.id}")])
+	user_id = sender.id
+
+	button_url = f"{base_url}?user_id={user_id}"
+	if requests.has_user_at_least_one_chat(user_id):
+		await bot.send_message(event.chat_id, f'Приветствую Вас, {sender.username}. Мы подготовили для Вас сообщения по выбранным каналам.', buttons=[types.KeyboardButtonSimpleWebView('Управлять каналами', button_url)])
+
+		text = "Каналы"
+		btns = []
+		stats = requests.get_user_chat_stats(user_id)
+		for stat in stats:
+			btns.append([Button.inline(f"{stat[1]} - {stat[2]}", data=[stat[0], event.chat_id])])
+
+		await bot.send_message(event.chat_id, text, buttons=btns)
+	else:
+		await bot.send_message(event.chat_id, f'Приветствую Вас, {sender.username}. У Вас пока не выбран ни один канал.', buttons=[types.KeyboardButtonSimpleWebView('Выбрать каналы', button_url)])
     
 	raise events.StopPropagation
 
-@bot.on(events.Raw)
-async def handler(update):
-	print("MessageService")
+@bot.on(events.CallbackQuery) # filter
+async def handler(callback):
 
+	data = json.loads(callback.data.decode("utf-8"))
+
+	messages = requests.get_user_chat_messages(data[0])
+
+	for message in messages:
+		await bot.send_message(data[1], f"<b>{message[0]}</b>      {message[2]}\n\n{message[1]}", parse_mode='html')	
+
+	raise events.StopPropagation
+
+@bot.on(events.Raw) #events.Raw(types=[MessageService])
+async def handler(update):
+	print(update)
+	
 	if type(update.message).__name__ != "MessageService":
 		return
 
@@ -34,10 +62,14 @@ async def handler(update):
 		await bot.send_message(entity=entity, message="Что-то пошло не так. Идентификатор пользователя не совпадает.")
 		return
 
-	if set_user_chats(entity.username, data):
-		await bot.send_message(entity=entity, message="Данные сохранены")
+	if requests.set_user_chats(entity.username, data):
+		button_url = f"{base_url}?user_id={user_id}"
+		if requests.has_user_at_least_one_chat(user_id):
+			await bot.send_message(entity=entity, message="Каналы успешно сохранены. Через некоторое время будут сформированы данные.", buttons=[types.KeyboardButtonSimpleWebView('Управлять каналами', button_url)])
+		else:
+			await bot.send_message(entity=entity, message="Список каналов пуст.", buttons=[types.KeyboardButtonSimpleWebView('Выбрать каналы', button_url)])
 	else:
-		await bot.send_message(entity=entity, message="Ошибка сохранения данных")
+		await bot.send_message(entity=entity, message="Ошибка сохранения данных.")
 
 	raise events.StopPropagation
 
