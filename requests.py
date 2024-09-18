@@ -121,7 +121,7 @@ def get_user_sort(user_id):
           SELECT sort
           FROM "user"
           WHERE id = %s""", (user_id,))
-        return cursor.fetchall()
+        return cursor.fetchone()
 
   except (Exception, psycopg2.DatabaseError) as error:
     print(error)

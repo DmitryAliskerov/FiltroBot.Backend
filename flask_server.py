@@ -14,8 +14,8 @@ def home():
 @app.route('/user_channels/<user_id>')
 def user_channels(user_id):
   return {
-    chats: get_user_chats(user_id),
-    sortOption: get_user_sort(user_id)
+    "chats": get_user_chats(user_id),
+    "sortOption": get_user_sort(user_id)
   }
 
 def run():
