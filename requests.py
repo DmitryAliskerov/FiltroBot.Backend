@@ -72,17 +72,32 @@ def get_chat_messages(chat_id):
     cursor.close()
     conn.close()
 
-def get_user_messages(user_id, group_type):
+def get_user_messages(user_id, sort_option):
+  print(sort_option)
+
   try:
     with connect() as conn:
       with  conn.cursor() as cursor:
+        order = "ORDER BY "
+        if sort_option == 0:
+          order += "m.timestamp"
+        elif sort_option == 1:
+          order += "m.chat_id, m.timestamp"
+        elif sort_option == 2:
+          order += "m.chat_id, t.name, m.timestamp"
+        elif sort_option == 3:
+          order += "t.name, m.timestamp"
+        elif sort_option == 4:
+          order += "t.name, m.chat_id, m.timestamp"
+
         cursor.execute("""
-          SELECT t.name, "link", m.timestamp
-          FROM message m
+          SELECT t.name, m.timestamp, m.link
+          FROM "user" u
+            LEFT JOIN user_chat uc ON uc.user_id = u.id
+            LEFT JOIN message m ON m.chat_id = uc.chat_id
             LEFT JOIN message_tag mt ON mt.id = m.id AND mt.chat_id = m.chat_id
             LEFT JOIN tag t ON t.id = mt.tag_id
-          WHERE m.chat_id = %s
-          ORDER BY m.timestamp""", (chat_id,))
+          WHERE u.id = %s""" + "\n" + order, (user_id,))
         return cursor.fetchall()
 
   except (Exception, psycopg2.DatabaseError) as error:
@@ -92,7 +107,6 @@ def get_user_messages(user_id, group_type):
   finally:
     cursor.close()
     conn.close()
-
 
 def get_user_chats(user_id):
   try:

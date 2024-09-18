@@ -21,13 +21,11 @@ async def start(event):
 	if requests.has_user_at_least_one_chat(user_id):
 		await bot.send_message(event.chat_id, f'Приветствую Вас, {sender.username}. Мы подготовили для Вас сообщения по выбранным каналам.', buttons=[types.KeyboardButtonSimpleWebView('Управлять каналами', button_url)])
 
-		text = "Каналы"
-		btns = []
-		stats = requests.get_user_chat_stats(user_id)
-		for stat in stats:
-			btns.append([Button.inline(f"{stat[1]} - {stat[2]}", data=[stat[0], event.chat_id])])
+		sort_option = requests.get_user_sort(user_id)
+		messages = requests.get_user_messages(user_id, sort_option[0])
 
-		await bot.send_message(event.chat_id, text, buttons=btns)
+		for message in messages:
+			await bot.send_message(event.chat_id, f"<b>{message[0]}</b>      {message[1]}\n\n{message[2]}", parse_mode='html')	
 	else:
 		await bot.send_message(event.chat_id, f'Приветствую Вас, {sender.username}. У Вас пока не выбран ни один канал.', buttons=[types.KeyboardButtonSimpleWebView('Выбрать каналы', button_url)])
     
