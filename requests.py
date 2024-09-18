@@ -51,7 +51,28 @@ def get_user_chat_stats(user_id):
     cursor.close()
     conn.close()
 
-def get_user_chat_messages(chat_id):
+def get_chat_messages(chat_id):
+  try:
+    with connect() as conn:
+      with  conn.cursor() as cursor:
+        cursor.execute("""
+          SELECT t.name, "link", m.timestamp
+          FROM message m
+            LEFT JOIN message_tag mt ON mt.id = m.id AND mt.chat_id = m.chat_id
+            LEFT JOIN tag t ON t.id = mt.tag_id
+          WHERE m.chat_id = %s
+          ORDER BY m.timestamp""", (chat_id,))
+        return cursor.fetchall()
+
+  except (Exception, psycopg2.DatabaseError) as error:
+    print(error)
+    return -1
+  
+  finally:
+    cursor.close()
+    conn.close()
+
+def get_user_messages(user_id, group_type):
   try:
     with connect() as conn:
       with  conn.cursor() as cursor:
@@ -73,8 +94,6 @@ def get_user_chat_messages(chat_id):
     conn.close()
 
 
-
-
 def get_user_chats(user_id):
   try:
     with connect() as conn:
@@ -94,6 +113,24 @@ def get_user_chats(user_id):
     cursor.close()
     conn.close()
 
+def get_user_sort(user_id):
+  try:
+    with connect() as conn:
+      with  conn.cursor() as cursor:
+        cursor.execute("""
+          SELECT sort
+          FROM "user"
+          WHERE id = %s""", (user_id,))
+        return cursor.fetchall()
+
+  except (Exception, psycopg2.DatabaseError) as error:
+    print(error)
+    return -1
+  
+  finally:
+    cursor.close()
+    conn.close()
+               
 def set_user_chats(username, data):
   try:
     with connect() as conn:
@@ -109,6 +146,10 @@ def set_user_chats(username, data):
         execute_values(cursor, """
           INSERT INTO user_chat (user_id, chat_id) VALUES %s ON CONFLICT DO NOTHING
         """, map(lambda x: (data['user_id'], x), data['chat_ids_to_insert']))
+
+        cursor.execute("""
+          UPDATE user SET sort = %s WHERE user_id = %s
+        """, (data['user_id'], data['sort_option'],))
 
         conn.commit()				
         return True

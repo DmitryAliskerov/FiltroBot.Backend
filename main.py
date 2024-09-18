@@ -38,7 +38,7 @@ async def handler(callback):
 
 	data = json.loads(callback.data.decode("utf-8"))
 
-	messages = requests.get_user_chat_messages(data[0])
+	messages = requests.get_chat_messages(data[0])
 
 	for message in messages:
 		await bot.send_message(data[1], f"<b>{message[0]}</b>      {message[2]}\n\n{message[1]}", parse_mode='html')	
