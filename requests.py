@@ -148,8 +148,8 @@ def set_user_chats(username, data):
         """, map(lambda x: (data['user_id'], x), data['chat_ids_to_insert']))
 
         cursor.execute("""
-          UPDATE user SET sort = %s WHERE user_id = %s
-        """, (data['user_id'], data['sort_option'],))
+          UPDATE "user" SET sort = %s WHERE id = %s
+        """, (data['sort_option'], data['user_id'],))
 
         conn.commit()				
         return True
