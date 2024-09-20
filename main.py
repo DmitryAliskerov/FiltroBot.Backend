@@ -27,6 +27,7 @@ async def start(event):
 		for message in messages:
 			await bot.send_message(event.chat_id, f"<b>{message[0]}</b>      {message[1]}\n\n{message[2]}", parse_mode='html')	
 	else:
+		requests.set_user(sender.id, sender.username)
 		await bot.send_message(event.chat_id, f'Приветствую Вас, {sender.username}. У Вас пока не выбран ни один канал.', buttons=[types.KeyboardButtonSimpleWebView('Выбрать каналы', button_url)])
     
 	raise events.StopPropagation
@@ -43,14 +44,12 @@ async def handler(callback):
 
 	raise events.StopPropagation
 
-@bot.on(events.Raw) #events.Raw(types=[MessageService])
+@bot.on(events.Raw(types.MessageService))
 async def handler(update):
 	print(update)
-	
-	if type(update.message).__name__ != "MessageService":
-		return
 
-	print("MessageService Proccess")
+	if not hasattr(update, 'message') or type(update.message).__name__ != "MessageService":
+		return
 
 	data = json.loads(update.message.action.data)
 	user_id = update.message.peer_id.user_id
@@ -60,7 +59,7 @@ async def handler(update):
 		await bot.send_message(entity=entity, message="Что-то пошло не так. Идентификатор пользователя не совпадает.")
 		return
 
-	if requests.set_user_chats(entity.username, data):
+	if requests.set_user_settings(data):
 		button_url = f"{base_url}?user_id={user_id}"
 		if requests.has_user_at_least_one_chat(user_id):
 			await bot.send_message(entity=entity, message="Каналы успешно сохранены. Через некоторое время будут сформированы данные.", buttons=[types.KeyboardButtonSimpleWebView('Управлять каналами', button_url)])
@@ -71,10 +70,14 @@ async def handler(update):
 
 	raise events.StopPropagation
 
-run_flask()
+async def run_sender_forever(bot):
+	return
+	
 
 def main():
+	run_flask()
 	bot.run_until_disconnected()
+	run_sender_forever(bot)
 
 if __name__ == '__main__':
 	main()

@@ -73,8 +73,6 @@ def get_chat_messages(chat_id):
     conn.close()
 
 def get_user_messages(user_id, sort_option):
-  print(sort_option)
-
   try:
     with connect() as conn:
       with  conn.cursor() as cursor:
@@ -145,14 +143,29 @@ def get_user_sort(user_id):
     cursor.close()
     conn.close()
                
-def set_user_chats(username, data):
+def set_user(user_id, user_name):
   try:
     with connect() as conn:
       with  conn.cursor() as cursor:
         cursor.execute("""
           INSERT INTO "user" (id, name) VALUES (%s, %s) ON CONFLICT DO NOTHING
-        """, (data['user_id'], username,))
+        """, (user_id, user_name,))
 
+        conn.commit()				
+        return True
+  
+  except (Exception, psycopg2.DatabaseError) as error:
+    print(error)
+    return False
+	
+  finally:
+    cursor.close()
+    conn.close()
+
+def set_user_settings(data):
+  try:
+    with connect() as conn:
+      with  conn.cursor() as cursor:
         cursor.execute("""
           DELETE FROM user_chat WHERE user_id = %s AND chat_id=ANY(%s)
         """, (data['user_id'], data['chat_ids_to_delete'],))
