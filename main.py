@@ -1,6 +1,5 @@
 import os
 import json 
-import time
 import requests
 import asyncio
 
@@ -30,17 +29,17 @@ async def start(event):
     
 	raise events.StopPropagation
 
-@bot.on(events.CallbackQuery) # filter
-async def handler(callback):
+#@bot.on(events.CallbackQuery)
+#async def handler(callback):
 
-	data = json.loads(callback.data.decode("utf-8"))
+#	data = json.loads(callback.data.decode("utf-8"))
 
-	messages = requests.get_chat_messages(data[0])
+#	messages = requests.get_chat_messages(data[0])
 
-	for message in messages:
-		await bot.send_message(data[1], f"<b>{message[0]}</b>      {message[2]}\n\n{message[1]}", parse_mode='html')	
+#	for message in messages:
+#		await bot.send_message(data[1], f"<b>{message[0]}</b>      {message[2]}\n\n{message[1]}", parse_mode='html')	
 
-	raise events.StopPropagation
+#	raise events.StopPropagation
 
 @bot.on(events.Raw)
 async def handler(update):
@@ -69,10 +68,5 @@ async def handler(update):
 	raise events.StopPropagation
 
 run_flask()
-run_sender(bot, 300)
 
-def main():
-	bot.run_until_disconnected()
-
-if __name__ == '__main__':
-	main()
+bot.loop.run_until_complete(run_sender(bot, 300))
