@@ -26,7 +26,7 @@ async def run_sender(bot, interval):
 				messages = requests.get_user_messages(user[0], user[1])
 				for message in messages:
 					try:
-						await bot.send_message(user[0], f"<b>{message[0]}</b>      {message[2]}\n\n{message[1]}", parse_mode='html')
+						await bot.send_message(user[0], f"<b>{message[0]}</b>\n{message[1]}\n\n{message[2]}", parse_mode='html')
 					except Exception as e:
 						break
 
