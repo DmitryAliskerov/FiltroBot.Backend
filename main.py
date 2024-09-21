@@ -1,6 +1,8 @@
 import os
 import json 
+import time
 import requests
+import asyncio
 
 from telethon import TelegramClient, events
 from telethon.sync import TelegramClient
@@ -8,6 +10,8 @@ from telethon import functions, types
 from telethon import Button
 from telethon.tl.custom import Button
 from flask_server import run_flask
+from sender import run_sender
+from threading import Thread
 
 bot = TelegramClient('bot', api_id=os.environ['API_ID'], api_hash=os.environ['API_HASH']).start(bot_token=os.environ['BOT_TOKEN'])
 base_url = "https://dmitryaliskerov.github.io/FiltroBot.UI"
@@ -20,12 +24,6 @@ async def start(event):
 	button_url = f"{base_url}?user_id={user_id}"
 	if requests.has_user_at_least_one_chat(user_id):
 		await bot.send_message(event.chat_id, f'Приветствую Вас, {sender.username}. Мы подготовили для Вас сообщения по выбранным каналам.', buttons=[types.KeyboardButtonSimpleWebView('Управлять каналами', button_url)])
-
-#		sort_option = requests.get_user_sort(user_id)
-#		messages = requests.get_user_messages(user_id, sort_option[0])
-
-#		for message in messages:
-#			await bot.send_message(event.chat_id, f"<b>{message[0]}</b>      {message[1]}\n\n{message[2]}", parse_mode='html')	
 	else:
 		requests.set_user(sender.id, sender.username)
 		await bot.send_message(event.chat_id, f'Приветствую Вас, {sender.username}. У Вас пока не выбран ни один канал.', buttons=[types.KeyboardButtonSimpleWebView('Выбрать каналы', button_url)])
@@ -44,7 +42,6 @@ async def handler(callback):
 
 	raise events.StopPropagation
 
-#@bot.on(events.Raw(types.MessageService))
 @bot.on(events.Raw)
 async def handler(update):
 	print(update)
@@ -71,14 +68,11 @@ async def handler(update):
 
 	raise events.StopPropagation
 
-async def run_sender_forever(bot):
-	return
-	
+run_flask()
+run_sender(bot, 300)
 
 def main():
-	run_flask()
 	bot.run_until_disconnected()
-	run_sender_forever(bot)
 
 if __name__ == '__main__':
 	main()
