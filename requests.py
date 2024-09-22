@@ -89,7 +89,7 @@ def get_user_messages(user_id, sort_option):
           order += "t.name, m.chat_id, m.timestamp"
 
         cursor.execute("""
-          SELECT t.name, m.timestamp, m.link, m.id, m.chat_id
+          SELECT t.name, m.timestamp - INTERVAL '1 minute' * u.tz_offset, m.link, m.id, m.chat_id
           FROM "user" u
             INNER JOIN user_chat uc ON uc.user_id = u.id
             LEFT JOIN message m ON m.chat_id = uc.chat_id
