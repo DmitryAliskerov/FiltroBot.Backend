@@ -129,7 +129,8 @@ def get_user_chats(user_id):
           SELECT c.id, c.aliase, c.name, CASE WHEN uc.user_id IS NULL THEN FALSE ELSE TRUE END
           FROM chat c
             LEFT JOIN user_chat uc ON uc.user_id = %s and uc.chat_id = c.id
-          WHERE c.enabled""", (user_id,))
+          WHERE c.enabled
+          ORDER BY c.name""", (user_id,))
         return cursor.fetchall()
 
   except (Exception, psycopg2.DatabaseError) as error:
