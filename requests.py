@@ -95,7 +95,7 @@ def get_user_messages(user_id, sort_option):
             LEFT JOIN message m ON m.chat_id = uc.chat_id
             LEFT JOIN message_tag mt ON mt.id = m.id AND mt.chat_id = m.chat_id
             LEFT JOIN tag t ON t.id = mt.tag_id
-          WHERE u.id = %s AND (uc.last_sended_message_id IS NULL OR m.id > uc.last_sended_message_id)""" + "\n" + order, (user_id,))
+          WHERE u.id = %s AND m.timestamp > COALESCE(uc.timestamp, now() at time zone 'utc' - INTERVAL '1 hour')""" + "\n" + order, (user_id,))
         return cursor.fetchall()
 
   except (Exception, psycopg2.DatabaseError) as error:
@@ -177,18 +177,15 @@ def set_user(user_id, user_name):
     cursor.close()
     conn.close()
 
-def set_user_chat_messages(user_id, ids):
+def set_user_chat_messages(user_id, data):
   try:
     with connect() as conn:
       with  conn.cursor() as cursor:
-
-        print(list( map(lambda x: (user_id, x[0], x[1]), ids)))
-
         execute_values(cursor, """
-          UPDATE user_chat SET last_sended_message_id = data.message_id
-          FROM (VALUES %s) AS data (user_id, chat_id, message_id)
+          UPDATE user_chat SET timestamp = data.timestamp
+          FROM (VALUES %s) AS data (user_id, chat_id, timestamp)
           WHERE user_chat.user_id = data.user_id AND user_chat.chat_id = data.chat_id
-        """, map(lambda x: (user_id, x[0], x[1]), ids))
+        """, map(lambda x: (user_id, x[0], x[1]), data))
 
         conn.commit()				
         return True

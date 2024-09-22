@@ -6,10 +6,12 @@ import asyncio
 
 from threading import Thread
 
-def get_max_message_id_by_chat_id(messages):
+def get_max_timestamp_by_chat_id(messages):
+    list = []
     it = itertools.groupby(messages, operator.itemgetter(4))
     for key, subiter in it:
-       yield key, max(item[3] for item in subiter) 
+       list.append((key, max(item[1] for item in subiter)))
+    return list
 
 async def run_sender(bot, interval):
 	while True:
@@ -30,8 +32,8 @@ async def run_sender(bot, interval):
 					except Exception as e:
 						break
 
-				ids = get_max_message_id_by_chat_id(messages)
-				requests.set_user_chat_messages(user[0], list(ids))
+				data = get_max_timestamp_by_chat_id(messages)
+				requests.set_user_chat_messages(user[0], data)
 
 		elapsed = time.time() - start_time
 
