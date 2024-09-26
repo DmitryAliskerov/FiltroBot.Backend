@@ -10,7 +10,7 @@ def get_max_timestamp_by_chat_id(messages):
     list = []
     it = itertools.groupby(messages, operator.itemgetter(4))
     for key, subiter in it:
-       list.append((key, max(item[1] for item in subiter)))
+       list.append((key, max(item[5] for item in subiter)))
     return list
 
 async def run_sender(bot, interval):
