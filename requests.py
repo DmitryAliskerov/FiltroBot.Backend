@@ -89,9 +89,10 @@ def get_user_messages(user_id, sort_option):
           order += "t.name, m.chat_id, m.timestamp"
 
         cursor.execute("""
-          SELECT t.name, m.timestamp - INTERVAL '1 minute' * u.tz_offset, m.link, m.id, m.chat_id, m.timestamp
+          SELECT COALESCE(t.name, c.theme), m.timestamp - INTERVAL '1 minute' * u.tz_offset, m.link, m.id, m.chat_id, m.timestamp
           FROM "user" u
             INNER JOIN user_chat uc ON uc.user_id = u.id
+            LEFT JOIN chat c ON c.id = uc.chat_id
             LEFT JOIN message m ON m.chat_id = uc.chat_id
             LEFT JOIN message_tag mt ON mt.id = m.id AND mt.chat_id = m.chat_id
             LEFT JOIN tag t ON t.id = mt.tag_id
@@ -126,7 +127,7 @@ def get_user_chats(user_id):
     with connect() as conn:
       with  conn.cursor() as cursor:
         cursor.execute("""
-          SELECT c.id, c.aliase, c.name, CASE WHEN uc.user_id IS NULL THEN FALSE ELSE TRUE END
+          SELECT c.id, c.aliase, c.name, CASE WHEN uc.user_id IS NULL THEN FALSE ELSE TRUE END, c.description
           FROM chat c
             LEFT JOIN user_chat uc ON uc.user_id = %s and uc.chat_id = c.id
           WHERE c.enabled
