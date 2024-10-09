@@ -127,7 +127,7 @@ def get_user_chats(user_id):
     with connect() as conn:
       with  conn.cursor() as cursor:
         cursor.execute("""
-          SELECT c.id, c.aliase, c.name, CASE WHEN uc.user_id IS NULL THEN FALSE ELSE TRUE END, c.description
+          SELECT c.id, c.theme, c.name, CASE WHEN uc.user_id IS NULL THEN FALSE ELSE TRUE END, c.description
           FROM chat c
             LEFT JOIN user_chat uc ON uc.user_id = %s and uc.chat_id = c.id
           WHERE c.enabled
